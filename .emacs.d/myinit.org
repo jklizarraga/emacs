@@ -1,0 +1,580 @@
+* Config/Reload
+** Config 
+#+begin_src emacs-lisp
+  (defun config-visit ()
+    (interactive)
+    (find-file "~/.emacs.d/myinit.org"))
+  (global-set-key (kbd "C-c e") 'config-visit)
+#+end_src
+
+#+RESULTS:
+: config-visit
+** Reload
+#+begin_src emacs-lisp
+  (defun config-reload ()
+    (interactive)
+    (org-babel-load-file (expand-file-name "~/.emacs.d/myinit.org")))
+  (global-set-key (kbd "C-c r") 'config-reload)
+#+end_src
+
+#+RESULTS:
+: config-reload
+
+* Basic behaviour
+
+** General
+#+BEGIN_SRC emacs-lisp
+  (when (string= system-type "darwin")       
+    (custom-set-variables
+     '(mac-command-modifier 'meta)
+     '(mac-option-modifier 'super)
+     '(mac-control-modifier 'control)
+     '(ns-function-modifier 'hyper)))
+
+  (global-auto-revert-mode 1) ;; you might not want this
+
+  (custom-set-variables
+   '(inhibit-startup-message t)
+   '(auto-revert-verbose nil)
+   '(save-interprogram-paste-before-kill t)
+   '(scroll-conservatively 100)
+   '(ring-bell-function 'ignore)
+   '(locale-coding-system 'utf-8))
+
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  (set-selection-coding-system 'utf-8)
+  (prefer-coding-system 'utf-8)
+
+  ;; Avoid typing "yes" or "no" and type "y" or "n" instead.
+  (defalias 'yes-or-no-p 'y-or-n-p)
+
+  ;; Bind directly ansi-term to /bin/bash without asking. 
+  (defvar my-term-shell "/bin/bash")
+  (defadvice ansi-term (before force-bash)
+    (interactive (list my-term-shell)))
+  (ad-activate 'ansi-term)
+  ;; Set Command+RET as the direct access to ansi-term
+  (global-set-key (kbd "<s-return>") 'ansi-term)
+#+END_SRC
+
+** Buffer Management
+#+begin_src emacs-lisp
+  (global-set-key (kbd "<f5>") 'revert-buffer)
+
+  ;; Always murder current buffer
+  (defun kill-current-buffer ()
+    "Kills the current buffer."
+    (interactive)
+    (kill-buffer (current-buffer)))
+  (global-set-key (kbd "C-x k") 'kill-current-buffer)
+
+  ;; Kill buffers without asking for confirmation
+  (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
+
+  ;; ibuffer
+  (defalias 'list-buffers 'ibuffer)
+
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (global-set-key (kbd "C-x b") 'ibuffer)
+
+  (setq ibuffer-saved-filter-groups
+        (quote (("default"
+                 ("dired" (mode . dired-mode))
+                 ("org" (name . "^.*org$"))
+                 ("magit" (mode . magit-mode))
+                 ("IRC" (or (mode . circe-channel-mode) (mode . circe-server-mode)))
+                 ("web" (or (mode . web-mode) (mode . js2-mode)))
+                 ("shell" (or (mode . eshell-mode) (mode . shell-mode)))
+                 ("mu4e" (or 
+                          (mode . mu4e-compose-mode)
+                          (name . "\*mu4e\*")
+                          ))
+                 ("programming" (or
+                                 (mode . clojure-mode)
+                                 (mode . clojurescript-mode)
+                                 (mode . python-mode)
+                                 (mode . c++-mode)))
+                 ("emacs" (or
+                           (name . "^\\*scratch\\*$")
+                           (name . "^\\*Messages\\*$")))
+                 ))))
+
+  (add-hook 'ibuffer-mode-hook
+            (lambda ()
+              (ibuffer-auto-mode 1)
+              (ibuffer-switch-to-saved-filter-groups "default")))
+
+  ;; don't show these
+  ;;(add-to-list 'ibuffer-never-show-predicates "Certain buffer that must not be shown")
+  ;; Don't show filter groups if there are no buffers in that group
+  (setq ibuffer-show-empty-filter-groups nil)
+
+  ;; Don't ask for confirmation to delete marked buffers
+  (setq ibuffer-expert t)
+
+  ;; Close all buffers
+  (defun close-all-buffers ()
+    "Kill all buffers without regard for their origin."
+    (interactive)
+    (mapc 'kill-buffer (buffer-list)))
+  (global-set-key (kbd "C-M-s-k") 'close-all-buffers)
+#+end_src
+
+** Text Manipulation
+#+begin_src emacs-lisp
+  ;; kill word
+  (defun jlizarraga/kill-inner-word ()
+    "Kills the entire word your cursor is in. Equivalent to 'ciw' in vim."
+    (interactive)
+    (forward-char 1)
+    (backward-word)
+    (kill-word 1))
+  (global-set-key (kbd "H-c w k") 'jlizarraga/kill-inner-word)
+
+  ;; copy word
+  (defun jlizarraga/copy-whole-word ()
+    (interactive)
+    (save-excursion
+      (forward-char 1)
+      (backward-word)
+      (kill-word 1)
+      (yank)))
+  (global-set-key (kbd "H-c w c") 'jlizarraga/copy-whole-word)
+
+  ;; copy line
+  (defun jlizarraga/copy-whole-line ()
+    "Copies a line without regard for cursor position."
+    (interactive)
+    (save-excursion
+      (kill-new
+       (buffer-substring
+        (point-at-bol)
+        (point-at-eol)))))
+  (global-set-key (kbd "H-c l c") 'jlizarraga/copy-whole-line)
+
+  ;; kill line
+  (global-set-key (kbd "H-c l k") 'kill-whole-line)
+
+  (custom-set-variables
+   '(global-subword-mode t))
+
+  ;; pair-wise completion
+  (custom-set-variables
+   '(electric-pair-pairs '(
+                           (?\{ . ?\})
+                           (?\( . ?\))
+                           (?\[ . ?\])
+                           (?\" . ?\")
+                           ))
+   '(electric-pair-mode t)
+   '(show-paren-mode t))
+#+end_src
+
+#+RESULTS:
+: mark-next-like-this
+
+* Interface tweaks
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+  (custom-set-variables
+   '(tool-bar-mode nil)
+   '(scroll-bar-mode nil))
+
+  (when window-system
+    (custom-set-variables
+     '(global-hl-line-mode t) ; Highlights the current cursor line
+     '(global-prettify-symbols-mode t))) ; An alternative can be pretty-mode
+
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(default ((t (:inherit nil :stipple nil :background "Black" :foreground "White" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "nil" :family "Menlo"))))
+   '(aw-leading-char-face ((t (:inherit ace-jump-face-foreground :height 3)))))
+#+END_SRC
+
+* Package: mark-multiple
+#+begin_src emacs-lisp
+  (use-package mark-multiple
+    :ensure t
+    :bind ("C-c q" . 'mark-next-like-this))
+#+end_src
+
+* Package: zzz-to-char
+#+begin_src emacs-lisp
+  (use-package zzz-to-char
+    :ensure t
+    :bind ("M-z" . zzz-up-to-char))
+#+end_src
+
+* Package: ox-reveal
+Package for exporting to Reveal.js
+This package needs to be configured before ORG because it introduces an incompatibility with org-structure-template-alist. The incompatibility is solved when ORG configuration is loaded and overrides org-structure-template-alist. 
+#+BEGIN_SRC emacs-lisp
+  (use-package ox-reveal
+    :ensure t
+    :config
+    (require 'ox-reveal)
+    (setq org-reveal-root "https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/") ; "http://cdn.jsdelivr.net/reveal.js/3.0.0/")
+    (setq org-reveal-mathjax t))
+
+  (use-package htmlize
+    :ensure t)
+#+END_SRC
+
+#+RESULTS:
+
+* ORG mode
+[[https://orgmode.org/manual/Structure-Templates.html][Problem with ORG template expansion]]
+#+BEGIN_SRC emacs-lisp
+
+  (use-package org
+    :ensure t
+    :pin org)
+
+  (use-package org-bullets
+    :ensure t
+    :hook (org-mode . org-bullets-mode))
+
+  (custom-set-variables
+   '(org-structure-template-alist
+     '(("a" . "export ascii")
+       ("c" . "center")
+       ("C" . "comment")
+       ("e" . "example")
+       ("E" . "export")
+       ("h" . "export html")
+       ("l" . "export latex")
+       ("q" . "quote")
+       ("s" . "src")
+       ("v" . "verse")
+       ("L" . "src emacs-lisp")))
+   '(org-tempo-keywords-alist
+     '(("H" . "html")
+       ("A" . "ascii")
+       ("i" . "index"))))
+
+   (require 'org-tempo) ; This is to enable the <KEY expnasions where KEY={s,l, etc.}
+
+   (custom-set-variables
+    '(
+      org-agenda-files
+      (quote
+       ("~/Documents/Work.org" "~/Documents/Projects/All/programme#ARTES-PPP title#Darwin/DARWIN.org")))
+    '(org-capture-templates
+      (quote
+       (("m" "Minutes of meeting" entry
+         (file+olp+datetree "~/Documents/Capture.org")
+         "* %U - %^{Subject} :MEETING:
+    :PROPERTIES:
+    :MEETING-TYPE: %^{Meeting-type|Face-to-Face|Teleconference|Videoconference|Phonecall}
+    :END:
+    :PARTICIPANTS:
+    %n
+    :END:
+    :AGENDA:
+
+    :END:
+    :NOTES:
+    %?
+    :END:
+    :ACTIONS:
+
+    :END:" :prepend t :jump-to-captured t :empty-lines 1 :empty-lines-before 1 :empty-lines-after 1))))
+    '(org-default-notes-file "~/Documents/Capture.org")
+    '(org-directory "~/Documents")
+    '(org-log-done (quote note))
+    '(org-log-into-drawer t)
+    '(org-refile-allow-creating-parent-nodes (quote confirm))
+    '(org-refile-targets (quote ((org-agenda-files :maxlevel . 2))))
+    '(org-refile-use-outline-path (quote file))
+    '(org-startup-indented t)
+    '(org-startup-with-inline-images t)
+    '(org-tags-column -132)
+    '(org-ellipsis " ")
+    '(org-src-fontify-natively t)
+    '(org-src-tab-acts-natively t)
+    '(org-confirm-babel-evaluate nil)
+    '(org-export-with-smart-quotes t)
+    '(org-src-window-setup 'reorganize-frame))
+
+  (add-hook 'org-mode-hook 'org-indent-mode)
+  (add-hook 'org-mode-hook #'visual-line-mode)
+
+  (global-set-key (kbd "C-c l") 'org-store-link)
+  (global-set-key (kbd "C-c a") 'org-agenda)
+  (global-set-key (kbd "C-c c") 'org-capture)
+
+  (defun narrow-or-widen-dwim (p)
+    "Widen if buffer is narrowed, narrow-dwim otherwise.
+    Dwim means: region, org-src-block, org-subtree, or
+    defun, whichever applies first. Narrowing to
+    org-src-block actually calls `org-edit-src-code'.
+
+    With prefix P, don't widen, just narrow even if buffer
+    is already narrowed."
+    (interactive "P")
+    (declare (interactive-only))
+    (cond ((and (buffer-narrowed-p) (not p)) (widen))
+          ((region-active-p)
+           (narrow-to-region (region-beginning)
+                             (region-end)))
+          ((derived-mode-p 'org-mode)
+           ;; `org-edit-src-code' is not a real narrowing
+           ;; command. Remove this first conditional if
+           ;; you don't want it.
+           (cond ((ignore-errors (org-edit-src-code) t)
+                  (delete-other-windows))
+                 ((ignore-errors (org-narrow-to-block) t))
+                 (t (org-narrow-to-subtree))))
+          ((derived-mode-p 'latex-mode)
+           (LaTeX-narrow-to-environment))
+          (t (narrow-to-defun))))
+
+  ;;(define-key endless/toggle-map "n" #'narrow-or-widen-dwim)
+  ;; This line actually replaces Emacs' entire narrowing
+  ;; keymap, that's how much I like this command. Only
+  ;; copy it if that's what you want.
+  (define-key ctl-x-map "n" #'narrow-or-widen-dwim)
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (define-key LaTeX-mode-map "\C-xn"
+                nil)))
+  (put 'narrow-to-region 'disabled nil)
+#+END_SRC
+
+#+RESULTS:
+
+* Package: Try
+It allows to try packages without installing them.
+#+BEGIN_SRC emacs-lisp
+  (use-package try
+    :ensure t)
+#+END_SRC
+
+* Package: which-key
+It is a minor mode for Emacs that displays the key bindings following your currently entered incomplete command (a prefix) in a popup.
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t
+    :config
+    (which-key-mode))
+#+END_SRC
+
+* Packages: ivy, counsel and swiper
+- Ivy, a generic completion mechanism for Emacs.
+- Counsel, a collection of Ivy-enhanced versions of common Emacs commands.
+- Swiper, an Ivy-enhanced alternative to isearch.
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy
+    :ensure t)
+
+  (use-package counsel
+    :ensure t
+    :bind
+    (("M-y" . counsel-yank-pop)
+     :map ivy-minibuffer-map
+     ("M-y" . ivy-next-line)))
+
+  (use-package swiper
+    :ensure t
+    :config
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq enable-recursive-minibuffers t)
+    (global-set-key "\C-s" 'swiper)
+    (global-set-key (kbd "C-c C-r") 'ivy-resume)
+    (global-set-key (kbd "<f6>") 'ivy-resume)
+    (global-set-key (kbd "M-x") 'counsel-M-x)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+    (global-set-key (kbd "<f1> l") 'counsel-find-library)
+    (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+    (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+    (global-set-key (kbd "C-c g") 'counsel-git)
+    (global-set-key (kbd "C-c j") 'counsel-git-grep)
+    ;; (global-set-key (kbd "C-c k") 'counsel-ag)
+    (global-set-key (kbd "C-x l") 'counsel-locate)
+    (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+    (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history))
+#+END_SRC
+
+* Package: ace-window
+It allows navigating the windows by naming/numbering each of them and assinging a key correspondingly.
+#+BEGIN_SRC emacs-lisp
+  (use-package ace-window
+    :ensure t
+    :bind ([remap other-window] . ace-window)
+    :defer t
+    :config
+    (set-face-attribute
+     'aw-leading-char-face nil
+     :foreground "deep sky blue"
+     :weight 'bold
+     :height 3.0)
+    (set-face-attribute
+     'aw-mode-line-face nil
+     :inherit 'mode-line-buffer-id
+     :foreground "lawn green"))
+#+END_SRC
+
+* Package: auto-complete
+Auto-Complete is an intelligent auto-completion extension for Emacs. It extends the standard Emacs completion interface and provides an environment that allows users to concentrate more on their own work.
+#+BEGIN_SRC emacs-lisp
+  (use-package auto-complete 
+    :ensure t
+    :init
+    (ac-config-default)
+    (global-auto-complete-mode t))
+#+END_SRC
+
+* Package: undo-tree
+#+BEGIN_SRC emacs-lisp
+  (use-package undo-tree
+    :ensure t
+    :init
+    (global-undo-tree-mode))
+#+END_SRC
+
+* Package: beacon
+It flashes the cursor's line when you scroll
+#+BEGIN_SRC emacs-lisp
+  (use-package beacon
+    :ensure t
+    :config
+    (beacon-mode 1))
+#+END_SRC
+
+* Package: hungry-delete
+It deletes all the whitespace when you hit backspace or delete.
+#+BEGIN_SRC emacs-lisp
+  (use-package hungry-delete
+    :ensure t
+    :config
+    (global-hungry-delete-mode))
+#+END_SRC
+
+* Package: expand-region
+It expands the marked region in semantic increments (negative prefix to reduce region).
+#+BEGIN_SRC emacs-lisp
+  (use-package expand-region
+    :ensure t
+    :config
+    (global-set-key (kbd "C-=") 'er/expand-region))
+#+END_SRC
+
+* Package: aggresive-indent
+#+BEGIN_SRC emacs-lisp
+(use-package aggressive-indent
+  :ensure t
+  :config
+  (global-aggressive-indent-mode 1))
+#+END_SRC
+
+* Package: iedit
+It allows to edit simultaneously multiple instances of the same occurrence.
+#+BEGIN_SRC emacs-lisp
+  (use-package iedit
+    :ensure t)
+#+END_SRC
+
+* Package: helm
+Alternative to ivy
+#+BEGIN_SRC emacs-lisp
+  ;; (use-package helm
+  ;;   :ensure t
+  ;;   :bind
+  ;;   ("C-x C-f" . 'helm-find-files)
+  ;;   ("C-x C-b" . 'helm-buffers-list)
+  ;;   ("M-x" . 'helm-M-x)
+  ;;   :config
+  ;;   (defun jlizarraga/helm-hide-minibuffer ()
+  ;;     (when (with-helm-buffer helm-echo-input-in-header-line)
+  ;;       (let ((ov (make-overlay (point-min) (point-max) nil nil t)))
+  ;;         (overlay-put ov 'window (selected-window))
+  ;;         (overlay-put ov 'face
+  ;;                      (let ((bg-color (face-background 'default nil)))
+  ;;                        `(:background ,bg-color :foreground ,bg-color)))
+  ;;         (setq-local cursor-type nil))))
+  ;;   (add-hook 'helm-minibuffer-set-up-hook 'jlizarraga/helm-hide-minibuffer)
+  ;;   (setq helm-autoresize-max-height 0
+  ;;         helm-autoresize-min-height 40
+  ;;         helm-M-x-fuzzy-match t
+  ;;         helm-buffers-fuzzy-matching t
+  ;;         helm-recentf-fuzzy-match t
+  ;;         helm-semantic-fuzzy-match t
+  ;;         helm-imenu-fuzzy-match t
+  ;;         helm-split-window-in-side-p nil
+  ;;         helm-move-to-line-cycle-in-source nil
+  ;;         helm-ff-search-library-in-sexp t
+  ;;         helm-scroll-amount 8 
+  ;;         helm-echo-input-in-header-line t)
+  ;;   :init
+  ;;   (helm-mode 1))
+
+  ;; (require 'helm-config)    
+  ;; (helm-autoresize-mode 1)
+  ;; (define-key helm-find-files-map (kbd "C-b") 'helm-find-files-up-one-level)
+  ;; (define-key helm-find-files-map (kbd "C-f") 'helm-execute-persistent-action)
+#+END_SRC
+
+* Package: multiple-cursors
+#+BEGIN_SRC emacs-lisp
+  (use-package multiple-cursors
+    :ensure t)
+#+END_SRC
+
+* Package: pcre2el
+To fix regex
+#+BEGIN_SRC emacs-lisp
+  (use-package pcre2el
+    :ensure t
+    :config (pcre-mode))
+#+END_SRC
+
+* Package: MaGit
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind ("C-x g" . magit-status))
+#+END_SRC
+
+* Dired
+#+BEGIN_SRC emacs-lisp
+  (custom-set-variables
+   '(dired-dwim-target t))
+
+  (use-package dired-narrow
+    :ensure t
+    :bind (("C-c C-n" . #'dired-narrow)
+           ("C-c C-f" . #'dired-narrow-fuzzy)
+           ("C-x C-N" . #'dired-narrow-regexp)))
+
+  (use-package dired-subtree
+    :ensure t
+    :after dired
+    :config
+    (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+    (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+#+END_SRC
+
+* Package: avy
+#+begin_src emacs-lisp
+  (use-package avy
+    :ensure t
+    :bind
+    ("M-s" . avy-goto-char))
+#+end_src
+
+* Package: async
+#+begin_src emacs-lisp
+  (use-package async
+    :ensure t
+    :init (dired-async-mode 1))
+#+end_src
+
+#+RESULTS:
