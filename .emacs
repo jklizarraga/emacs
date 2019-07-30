@@ -33,6 +33,7 @@ There are two things you can do about this warning:
 ;; You may delete these explanatory comments.
 (package-initialize)
 
+
 ;; use-package
 (eval-when-compile
   (require 'use-package))
@@ -51,13 +52,13 @@ There are two things you can do about this warning:
   (auto-package-update-maybe))
 
 (org-babel-do-load-languages
- 'org-babel-load-languages '((emacs-lisp . t) (mermaid . t)))
+ 'org-babel-load-languages '((emacs-lisp . t) (mermaid . t) (gnuplot . t)))
 
 ;; A GNU Emacs library to ensure environment variables inside Emacs look the same as in the user's shell.
-(use-package exec-path-from-shell
-  :ensure t)
+;; (use-package exec-path-from-shell
+;;  :ensure t)
+;;  (when (memq window-system '(mac ns x))
+;;  (exec-path-from-shell-initialize))
 
-(when (memq window-system '(mac ns x))
-  (exec-path-from-shell-initialize))
 
 (org-babel-load-file (expand-file-name "~/.emacs.d/myinit.org"))
