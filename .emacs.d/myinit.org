@@ -56,6 +56,10 @@
   (ad-activate 'ansi-term)
   ;; Set Command+RET as the direct access to ansi-term
   (global-set-key (kbd "<s-return>") 'ansi-term)
+
+  (add-to-list 'default-frame-alist
+                       '(font . "Source Code Pro Regular-12"))
+
 #+END_SRC
 
 ** Buffer Management
@@ -282,7 +286,9 @@ This package needs to be configured before ORG because it introduces an incompat
        ("A" . "ascii")
        ("i" . "index"))))
 
-   (require 'org-tempo) ; This is to enable the <KEY expnasions where KEY={s,l, etc.}
+   (when (version< "9.1.4" (org-version))
+      (add-to-list 'org-modules 'org-tempo))
+   ;;(require 'org-tempo) ; This is to enable the <KEY expnasions where KEY={s,l, etc.}
 
    (custom-set-variables
     '(
@@ -606,9 +612,13 @@ To fix regex
 
 * Package: mermaid
 #+begin_src emacs-lisp
+  (use-package ob-mermaid
+    :ensure t)
   (use-package mermaid-mode
     :ensure t)
 #+end_src
+
+#+RESULTS:
 
 * Package: gnuplot-mode
 #+begin_src emacs-lisp
@@ -644,6 +654,3 @@ This is requirement to work with gnuplot in Babel
    (lambda (&optional arg) "Keyboard macro." (interactive "p") (kmacro-exec-ring-item (quote ([134217765 35 43 67 65 80 84 73 79 78 58 32 105 109 103 13 35 43 67 65 80 84 73 79 78 58 32 13 46 13 35 43 78 65 77 69 58 32 102 105 103 58 70 105 103 117 114 101 32 24 11 9 13 134217747 13 70 105 103 117 114 101 32 91 48 45 57 93 8209 91 48 45 57 93 91 48 45 57 93 46 32 13 67108896 1 127 5 127 67108896 1 23 18 13 35 43 67 65 80 84 73 79 78 58 32 13 5 25 46 down 5 13 35 43 65 84 84 82 95 72 84 77 76 58 32 58 97 108 116 32 25 32 58 116 105 116 108 101 32 25 down 127 down 3 12 13 13 1 3 12 67108896 1 134217847 13 25 13 13 13 134217848 100 101 108 101 116 101 45 102 111 114 119 97 114 100 45 99 104 97 114] 9 "%d")) arg)))
 (put 'update-image-caption-and-html-attributes 'kmacro t)
 #+END_SRC
-
-#+RESULTS:
-: t
