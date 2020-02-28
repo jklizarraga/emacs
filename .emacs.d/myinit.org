@@ -54,11 +54,9 @@
   (defadvice ansi-term (before force-bash)
     (interactive (list my-term-shell)))
   (ad-activate 'ansi-term)
-  ;; Set Command+RET as the direct access to ansi-term
-  (global-set-key (kbd "<s-return>") 'ansi-term)
-
-  (add-to-list 'default-frame-alist
-                       '(font . "Source Code Pro-12"))
+  
+;;(add-to-list 'default-frame-alist
+;;                       '(font . "Source Code Pro-12"))
 
 #+END_SRC
 
@@ -89,7 +87,7 @@
                  ("magit" (mode . magit-mode))
                  ("IRC" (or (mode . circe-channel-mode) (mode . circe-server-mode)))
                  ("web" (or (mode . web-mode) (mode . js2-mode)))
-                 ("shell" (or (mode . eshell-mode) (mode . shell-mode)))
+                 ("shell" (or (mode . eshell-mode) (mode . shell-mode) (mode . term-mode)))
                  ("mu4e" (or 
                           (mode . mu4e-compose-mode)
                           (name . "\*mu4e\*")
@@ -124,6 +122,9 @@
     (mapc 'kill-buffer (buffer-list)))
   (global-set-key (kbd "C-M-s-k") 'close-all-buffers)
 #+end_src
+
+#+RESULTS:
+: close-all-buffers
 
 ** Text Manipulation
 #+begin_src emacs-lisp
@@ -175,14 +176,14 @@
    '(show-paren-mode t))
 
   ;; Common User Access (CUA) mode
-  (cua-mode t)
-  (setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
-  (transient-mark-mode 1)               ;; No region when it is not highlighted
-  (setq cua-keep-region-after-copy t)   ;; Standard Windows behaviour
+  ;;(cua-mode nil)
+  ;;(setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
+  ;;(transient-mark-mode 1)               ;; No region when it is not highlighted
+  ;;(setq cua-keep-region-after-copy t)   ;; Standard Windows behaviour
   ;; CUA shift + click select region
-  (define-key global-map (kbd "<S-down-mouse-1>") 'ignore) ; turn off font dialog
-  (define-key global-map (kbd "<S-mouse-1>") 'mouse-set-point)
-  (put 'mouse-set-point 'CUA 'move)
+  ;;(define-key global-map (kbd "<S-down-mouse-1>") 'ignore) ; turn off font dialog
+  ;;(define-key global-map (kbd "<S-mouse-1>") 'mouse-set-point)
+  ;;(put 'mouse-set-point 'CUA 'move)
   ;; Note: add numbers to the lines using M-n when in cua-mode.
 
 #+end_src
@@ -203,14 +204,17 @@
      '(global-hl-line-mode t) ; Highlights the current cursor line
      '(global-prettify-symbols-mode t))) ; An alternative can be pretty-mode
 
-  (custom-set-faces
-   ;; custom-set-faces was added by Custom.
-   ;; If you edit it by hand, you could mess it up, so be careful.
-   ;; Your init file should contain only one such instance.
-   ;; If there is more than one, they won't work right.
-   '(default ((t (:inherit nil :stipple nil :background "Black" :foreground "White" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "nil" :family "Menlo"))))
-   '(aw-leading-char-face ((t (:inherit ace-jump-face-foreground :height 3)))))
+  ;;(custom-set-faces
+  ;; ;; custom-set-faces was added by Custom.
+  ;; ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; ;; Your init file should contain only one such instance.
+  ;; ;; If there is more than one, they won't work right.
+  ;; '(default ((t (:inherit nil :stipple nil :background "Black" :foreground "White" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 180 :width normal :foundry "nil" :family "Source Code Pro for Powerline"))))
+  (custom-set-faces '(default ((t (:inherit nil :stipple nil :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 180 :width normal :foundry "nil" :family "Source Code Pro for Powerline"))))
+  '(aw-leading-char-face ((t (:inherit ace-jump-face-foreground :height 3)))))
 #+END_SRC
+
+#+RESULTS:
 
 * Package: exec-path-from-shell
 #+begin_src emacs-lisp
@@ -239,6 +243,19 @@
     :bind ("M-z" . zzz-up-to-char))
 #+end_src
 
+* Package: ox-pandoc
+Package to export ORG files using PANDOC.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-pandoc
+    :ensure t
+    :config
+    (require 'ox-pandoc))
+#+END_SRC
+
+#+RESULTS:
+: t
+
 * Package: ox-reveal
 Package for exporting to Reveal.js
 This package needs to be configured before ORG because it introduces an incompatibility with org-structure-template-alist. The incompatibility is solved when ORG configuration is loaded and overrides org-structure-template-alist. 
@@ -260,122 +277,148 @@ This package needs to be configured before ORG because it introduces an incompat
 [[https://orgmode.org/manual/Structure-Templates.html][Problem with ORG template expansion]]
 #+BEGIN_SRC emacs-lisp
 
-  (use-package org
-    :ensure t
-    :pin org)
+      (use-package org
+        :ensure t
+        :pin org)
 
-  (use-package org-bullets
-    :ensure t
-    :hook (org-mode . org-bullets-mode))
+      (use-package org-bullets
+        :ensure t
+        :hook (org-mode . org-bullets-mode))
 
-  (custom-set-variables
-   '(org-structure-template-alist
-     '(("a" . "export ascii")
-       ("c" . "center")
-       ("C" . "comment")
-       ("e" . "example")
-       ("E" . "export")
-       ("h" . "export html")
-       ("l" . "export latex")
-       ("q" . "quote")
-       ("s" . "src")
-       ("v" . "verse")
-       ("L" . "src emacs-lisp")))
-   '(org-tempo-keywords-alist
-     '(("H" . "html")
-       ("A" . "ascii")
-       ("i" . "index"))))
+      (custom-set-variables
+       '(org-structure-template-alist
+         '(("a" . "export ascii")
+           ("c" . "center")
+           ("C" . "comment")
+           ("e" . "example")
+           ("E" . "export")
+           ("h" . "export html")
+           ("l" . "export latex")
+           ("q" . "quote")
+           ("s" . "src")
+           ("v" . "verse")
+           ("L" . "src emacs-lisp")))
+       '(org-tempo-keywords-alist
+         '(("H" . "html")
+           ("A" . "ascii")
+           ("i" . "index"))))
 
-   (when (version< "9.1.4" (org-version))
-      (add-to-list 'org-modules 'org-tempo))
-   ;;(require 'org-tempo) ; This is to enable the <KEY expnasions where KEY={s,l, etc.}
+       (when (version< "9.1.4" (org-version))
+          (add-to-list 'org-modules 'org-tempo))
+       ;;(require 'org-tempo) ; This is to enable the <KEY expnasions where KEY={s,l, etc.}
 
-   (custom-set-variables
-    '(
-      org-agenda-files
-      (quote
-       ("~/Documents/Work.org" "~/Documents/Projects/All/programme#ARTES-PPP title#Darwin/DARWIN.org")))
-    '(org-capture-templates
-      (quote
-       (("m" "Minutes of meeting" entry
-         (file+olp+datetree "~/Documents/Capture.org")
-         "* %U - %^{Subject} :MEETING:
-    :PROPERTIES:
-    :MEETING-TYPE: %^{Meeting-type|Face-to-Face|Teleconference|Videoconference|Phonecall}
-    :END:
-    :PARTICIPANTS:
-    %n
-    :END:
-    :AGENDA:
+       (custom-set-variables
+        '(
+          org-agenda-files
+          (quote
+           ("~/Documents/Work.org" "~/Documents/Projects/All/programme#ARTES-PPP title#Darwin/DARWIN.org")))
+        '(org-capture-templates
+          (quote
+           (("m" "Minutes of meeting" entry
+             (file+olp+datetree "~/Documents/Capture.org")
+             "* %U - %^{Subject} :MEETING:
+        :PROPERTIES:
+        :MEETING-TYPE: %^{Meeting-type|Face-to-Face|Teleconference|Videoconference|Phonecall}
+        :END:
+        :PARTICIPANTS:
+        %n
+        :END:
+        :AGENDA:
 
-    :END:
-    :NOTES:
-    %?
-    :END:
-    :ACTIONS:
+        :END:
+        :NOTES:
+        %?
+        :END:
+        :ACTIONS:
 
-    :END:" :prepend t :jump-to-captured t :empty-lines 1 :empty-lines-before 1 :empty-lines-after 1))))
-    '(org-default-notes-file "~/Documents/Capture.org")
-    '(org-directory "~/Documents")
-    '(org-log-done (quote note))
-    '(org-log-into-drawer t)
-    '(org-refile-allow-creating-parent-nodes (quote confirm))
-    '(org-refile-targets (quote ((org-agenda-files :maxlevel . 2))))
-    '(org-refile-use-outline-path (quote file))
-    '(org-startup-indented t)
-    '(org-startup-with-inline-images t)
-    '(org-tags-column -132)
-    '(org-ellipsis " ")
-    '(org-src-fontify-natively t)
-    '(org-src-tab-acts-natively t)
-    '(org-confirm-babel-evaluate nil)
-    '(org-export-with-smart-quotes t)
-    '(org-src-window-setup 'reorganize-frame))
+        :END:" :prepend t :jump-to-captured t :empty-lines 1 :empty-lines-before 1 :empty-lines-after 1))))
+        '(org-default-notes-file "~/Documents/Capture.org")
+        '(org-directory "~/Documents")
+        '(org-log-done (quote note))
+        '(org-log-into-drawer t)
+        '(org-refile-allow-creating-parent-nodes (quote confirm))
+        '(org-refile-targets (quote ((org-agenda-files :maxlevel . 2))))
+        '(org-refile-use-outline-path (quote file))
+        '(org-startup-indented t)
+        '(org-startup-with-inline-images t)
+        '(org-tags-column -132)
+        '(org-ellipsis " ")
+        '(org-src-fontify-natively t)
+        '(org-src-tab-acts-natively t)
+        '(org-confirm-babel-evaluate nil)
+        '(org-export-with-smart-quotes t)
+        '(org-src-window-setup 'reorganize-frame)
+        '(org-export-allow-bind-keywords t))
 
-  (add-hook 'org-mode-hook 'org-indent-mode)
-  (add-hook 'org-mode-hook #'visual-line-mode)
+      (add-hook 'org-mode-hook 'org-indent-mode)
+      (add-hook 'org-mode-hook #'visual-line-mode)
 
-  (global-set-key (kbd "C-c l") 'org-store-link)
-  (global-set-key (kbd "C-c a") 'org-agenda)
-  (global-set-key (kbd "C-c c") 'org-capture)
+      (global-set-key (kbd "C-c l") 'org-store-link)
+      (global-set-key (kbd "C-c a") 'org-agenda)
+      (global-set-key (kbd "C-c c") 'org-capture)
 
-  (defun narrow-or-widen-dwim (p)
-    "Widen if buffer is narrowed, narrow-dwim otherwise.
-    Dwim means: region, org-src-block, org-subtree, or
-    defun, whichever applies first. Narrowing to
-    org-src-block actually calls `org-edit-src-code'.
+      (defun narrow-or-widen-dwim (p)
+        "Widen if buffer is narrowed, narrow-dwim otherwise.
+        Dwim means: region, org-src-block, org-subtree, or
+        defun, whichever applies first. Narrowing to
+        org-src-block actually calls `org-edit-src-code'.
 
-    With prefix P, don't widen, just narrow even if buffer
-    is already narrowed."
-    (interactive "P")
-    (declare (interactive-only))
-    (cond ((and (buffer-narrowed-p) (not p)) (widen))
-          ((region-active-p)
-           (narrow-to-region (region-beginning)
-                             (region-end)))
-          ((derived-mode-p 'org-mode)
-           ;; `org-edit-src-code' is not a real narrowing
-           ;; command. Remove this first conditional if
-           ;; you don't want it.
-           (cond ((ignore-errors (org-edit-src-code) t)
-                  (delete-other-windows))
-                 ((ignore-errors (org-narrow-to-block) t))
-                 (t (org-narrow-to-subtree))))
-          ((derived-mode-p 'latex-mode)
-           (LaTeX-narrow-to-environment))
-          (t (narrow-to-defun))))
+        With prefix P, don't widen, just narrow even if buffer
+        is already narrowed."
+        (interactive "P")
+        (declare (interactive-only))
+        (cond ((and (buffer-narrowed-p) (not p)) (widen))
+              ((region-active-p)
+               (narrow-to-region (region-beginning)
+                                 (region-end)))
+              ((derived-mode-p 'org-mode)
+               ;; `org-edit-src-code' is not a real narrowing
+               ;; command. Remove this first conditional if
+               ;; you don't want it.
+               (cond ((ignore-errors (org-edit-src-code) t)
+                      (delete-other-windows))
+                     ((ignore-errors (org-narrow-to-block) t))
+                     (t (org-narrow-to-subtree))))
+              ((derived-mode-p 'latex-mode)
+               (LaTeX-narrow-to-environment))
+              (t (narrow-to-defun))))
 
-  ;;(define-key endless/toggle-map "n" #'narrow-or-widen-dwim)
-  ;; This line actually replaces Emacs' entire narrowing
-  ;; keymap, that's how much I like this command. Only
-  ;; copy it if that's what you want.
-  (define-key ctl-x-map "n" #'narrow-or-widen-dwim)
-  (add-hook 'LaTeX-mode-hook
-            (lambda ()
-              (define-key LaTeX-mode-map "\C-xn"
-                nil)))
-  (put 'narrow-to-region 'disabled nil)
+      ;;(define-key endless/toggle-map "n" #'narrow-or-widen-dwim)
+      ;; This line actually replaces Emacs' entire narrowing
+      ;; keymap, that's how much I like this command. Only
+      ;; copy it if that's what you want.
+      (define-key ctl-x-map "n" #'narrow-or-widen-dwim)
+      (add-hook 'LaTeX-mode-hook
+                (lambda ()
+                  (define-key LaTeX-mode-map "\C-xn"
+                    nil)))
+      (put 'narrow-to-region 'disabled nil)
+
+      (setq org-html-preamble nil)
+      (setq org-html-postamble nil)
+      (setq org-html-xml-declaration (quote (("html" . "")
+                                           ("was-html" . "<?xml version=\"1.0\" encoding=\"%s\"?>")
+                                           ("php" . "<?php echo \"<?xml version=\\\"1.0\\\" encoding=\\\"%s\\\" ?>\"; ?>"))))
+      (setq org-src-fontify-natively t)
 #+END_SRC
+
+#+RESULTS:
+
+* Package: jupyter
+This package provides an API for creating Jupyter kernel frontends in Emacs.
+
+#+begin_src emacs-lisp
+  (use-package jupyter
+    :ensure t)
+#+end_src
+
+#+RESULTS:
+
+* Package: julia mode
+#+begin_src emacs-lisp
+(use-package julia-mode
+ :ensure t)
+#+end_src
 
 #+RESULTS:
 
@@ -554,12 +597,23 @@ Alternative to ivy
 #+END_SRC
 
 * Package: multiple-cursors
+
+For this package to work properly with org-mode and and hungry-delete, the file .mc-list.el must have org-self-insert-command and hungry-delete-backward in the "run-for-all" list.
+
 #+BEGIN_SRC emacs-lisp
-    (use-package multiple-cursors
-      :ensure t
-      :config
-       (global-set-key (kbd "C-c m c") 'mc/edit-lines))
+(use-package multiple-cursors
+ :ensure t
+ :bind (("C-c m c" . mc/edit-lines)
+        ("C-." . mc/mark-next-like-this)
+        ("C-," . mc/unmark-next-like-this)
+        ("C-S-<mouse-1>" . mc/add-cursor-on-click))
+;;:config
+;;  (global-set-key (kbd "C-c m c") 'mc/edit-lines)
+)
 #+END_SRC
+
+#+RESULTS:
+: mc/add-cursor-on-click
 
 * Package: pcre2el
 To fix regex
@@ -577,6 +631,7 @@ To fix regex
 #+END_SRC
 
 * Dired
+See https://github.com/Fuco1/dired-hacks
 #+BEGIN_SRC emacs-lisp
   (custom-set-variables
    '(dired-dwim-target t))
@@ -639,6 +694,70 @@ This is requirement to work with gnuplot in Babel
 
 #+RESULTS:
 : org-plot/gnuplot
+
+* Package: multi-term
+#+begin_src emacs-lisp
+  (use-package multi-term
+    :ensure t
+    :config
+    (setq multi-term-program "/usr/local/bin/zsh"))
+
+  ;; Set Command+RET as the direct access to multi-term
+  (global-set-key (kbd "<s-return>") 'multi-term)
+#+end_src
+
+#+RESULTS:
+: t
+
+* Package: pdf-tools
+
+#+begin_src emacs-lisp
+(use-package pdf-tools
+ :ensure t
+ :config
+  (pdf-tools-install)
+  (setq-default pdf-view-display-size 'fit-page)
+  (custom-set-variables '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+  ;; use normal isearch because swiper does not work
+  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+  ;; automatically annotate highlights
+  (setq pdf-annot-activate-created-annotations t)
+  ;; turn off cua so copy works
+  (add-hook 'pdf-view-mode-hook (lambda () (cua-mode 0)))
+  ;; more fine-grained zooming
+  (setq pdf-view-resize-factor 1.1)
+  ;; keyboard shortcuts
+  (define-key pdf-view-mode-map (kbd "h") 'pdf-annot-add-highlight-markup-annotation)
+  (define-key pdf-view-mode-map (kbd "t") 'pdf-annot-add-text-annotation)
+  (define-key pdf-view-mode-map (kbd "D") 'pdf-annot-delete)
+  ;; wait until map is available
+  (with-eval-after-load "pdf-annot"
+   (define-key pdf-annot-edit-contents-minor-mode-map (kbd "<return>") 'pdf-annot-edit-contents-commit)
+   (define-key pdf-annot-edit-contents-minor-mode-map (kbd "<S-return>") 'newline)
+   ;; save after adding comment
+   (advice-add 'pdf-annot-edit-contents-commit :after 'bjm/save-buffer-no-args))
+)
+#+end_src
+
+#+RESULTS:
+: t
+
+** Known problems
+
+*** linum-mode
+
+PDF Tools does not work well together with linum-mode and activating it in a pdf-view-mode, e.g. via global-linum-mode, might make Emacs choke.
+
+*** auto-revert
+
+Autorevert works by polling the file-system every auto-revert-interval seconds, optionally combined with some event-based reverting via file notification. But this currently does not work reliably, such that Emacs may revert the PDF-buffer while the corresponding file is still being written to (e.g. by LaTeX), leading to a potential error.
+
+With a recent auctex installation, you might want to put the following somewhere in your dotemacs, which will revert the PDF-buffer after the TeX compilation has finished.
+
+#+begin_src emacs-lisp
+(add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+#+end_src
 
 * Package: elmacro
 #+BEGIN_SRC emacs-lisp
