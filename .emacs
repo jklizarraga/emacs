@@ -60,4 +60,4 @@ There are two things you can do about this warning:
 (org-babel-load-file (expand-file-name "~/.emacs.d/myinit.org"))
 
 (org-babel-do-load-languages
- 'org-babel-load-languages '((emacs-lisp . t) (mermaid . t) (gnuplot . t)))
+ 'org-babel-load-languages '((emacs-lisp . t) (mermaid . t) (gnuplot . t) (jupyter . t)))
